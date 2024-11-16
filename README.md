@@ -1,4 +1,4 @@
-# PyPKSim
+# GraphPKSim
 
 A simple simulation widget for a two-compartment pharmacokinetic (PK) model, exploring graph-theoretic representations of the system.
 ![GraphPKSimulator](images/graphpksimulator.png)
