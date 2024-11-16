@@ -1,8 +1,10 @@
+import os
+import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from scipy.integrate import solve_ivp
-from matplotlib.widgets import Slider
+from matplotlib.widgets import Slider, Button, TextBox
 
 
 class CompartmentalModelSimulator:
@@ -24,10 +26,7 @@ class CompartmentalModelSimulator:
             "V_p": 2.5,
             "CL": 0.2,
         }
-        self.sampled_means = {
-            param: np.random.normal(self.initial_means[param], self.std_dev_values[param], self.n_samples)
-            for param in self.initial_means
-        }
+        self.sampled_means = self._generate_samples()
 
         # Define nominal sampling times and fixed jitter
         self.nominal_times = np.array([0, 0.5, 1, 2, 4, 6, 8, 12, 16, 24, 36, 48, 72, 96, 120])
@@ -78,11 +77,58 @@ class CompartmentalModelSimulator:
 
         for slider in self.sliders:
             slider.on_changed(self.update)
+        
+        # Add input box for n_samples
+        self.n_samples_box_ax = plt.axes([0.2, 0.9, 0.1, 0.05])  # Position left of the save button
+        self.n_samples_box = TextBox(
+            self.n_samples_box_ax, 
+            label="Samples:", 
+            initial=str(self.n_samples)
+        )
+        self.n_samples_box.on_submit(self.update_n_samples)
+
+        # Add a TextBox for file name input
+        self.file_name_box_ax = plt.axes([0.4, 0.9, 0.25, 0.05])  # Position for file name TextBox
+        self.file_name_box = TextBox(
+            self.file_name_box_ax,
+            label="File Name: ",
+            initial="simulation_results.csv",
+        )
+
+        # Add a button to save plotted points to a CSV
+        self.save_button_ax = plt.axes([0.675, 0.9, 0.1, 0.05])  # Position above the plot
+        self.save_button = Button(self.save_button_ax, 'Save to CSV', color='lightblue', hovercolor='dodgerblue')
+        self.save_button.on_clicked(self.save_to_csv)
 
         # Initial plot
         self.plot_simulation()
 
         plt.show()
+
+    def _generate_samples(self):
+        return {
+            param: np.random.normal(self.initial_means[param], self.std_dev_values[param], self.n_samples)
+            for param in self.initial_means
+        }
+    
+    def _generate_fixed_jitter(self):
+        return [
+            self.nominal_times + np.random.uniform(-1.5, 1.5, size=self.nominal_times.shape)
+            for _ in range(self.n_samples)
+        ]
+
+    def update_n_samples(self, text):
+        try:
+            n_samples = int(text)
+            if n_samples > 0:
+                self.n_samples = n_samples
+                self.sampled_means = self._generate_samples()
+                self.fixed_jitter = self._generate_fixed_jitter()
+                self.plot_simulation()
+            else:
+                print("Number of samples must be greater than 0.")
+        except ValueError:
+            print("Invalid input. Please enter an integer.")
 
     # Define the out-degree Laplacian matrix L
     def laplacian_out_matrix(self, K_a, Q, V_c, V_p, CL):
@@ -112,6 +158,7 @@ class CompartmentalModelSimulator:
     def plot_simulation(self, initial_dose=50.0, total_time=120):
         # Clear the current figure
         self.ax.clear()
+        self.plot_results = []
 
         for i in range(self.n_samples):
             # Define Laplacian matrix for each sample
@@ -126,6 +173,7 @@ class CompartmentalModelSimulator:
 
             # Extract central compartment concentration
             central_concentration = results[:, 1]
+            self.plot_results.append(central_concentration)
 
             # Plot dense line for the central compartment
             self.ax.plot(t_eval, central_concentration, color=plt.get_cmap("tab10")(0), alpha=0.3)
@@ -174,6 +222,39 @@ class CompartmentalModelSimulator:
             self.update_spread(param, slider.val)
 
         self.plot_simulation()
+    
+    # Save the plotted points to a CSV
+    def save_to_csv(self, event):
+        """Saves the nominal times, actual times, concentrations, and parameters to a CSV file."""
+        file_name = self.file_name_box.text.strip()  # Get the file name from the TextBox
+        if not file_name.endswith(".csv"):
+            file_name += ".csv"
+
+        with open(os.path.join("simulated_results", file_name), "w", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+
+            # Write the header with parameter columns
+            writer.writerow([
+                "ID", "Nominal Time", "Actual Time", "Concentration",
+                "K_a", "Q", "V_c", "V_p", "CL"
+            ])
+
+            # Write data for each sample
+            for i in range(self.n_samples):
+                params = [
+                    self.sampled_means["K_a"][i],
+                    self.sampled_means["Q"][i],
+                    self.sampled_means["V_c"][i],
+                    self.sampled_means["V_p"][i],
+                    self.sampled_means["CL"][i],
+                ]
+                for nominal_time, actual_time, concentration in zip(
+                    self.nominal_times, self.fixed_jitter[i], self.plot_results[i]
+                ):
+                    writer.writerow([i + 1, nominal_time, actual_time, concentration, *params])
+        print(f"Results saved to {file_name}")
+
+
 
 if __name__ == "__main__":
     simulator = CompartmentalModelSimulator()
