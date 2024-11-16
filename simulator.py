@@ -7,7 +7,7 @@ from scipy.integrate import solve_ivp
 from matplotlib.widgets import Slider, Button, TextBox
 
 
-class CompartmentalModelSimulator:
+class GraphPKSimulator:
 
     def __init__(self, n_samples = 20, Ka = 0.5, Q = 1.3, Vc = 20, Vp = 10, CL = 0.75):
         # Initialize sampled means and spreads for each parameter
@@ -189,7 +189,7 @@ class CompartmentalModelSimulator:
         # Add the image of the compartmental model in the upper right corner
         inset_ax = self.ax.inset_axes([0.62, 0.58, 0.4, 0.4], transform=self.ax.transAxes)  # Adjust position and size
         inset_ax.axis("off")  # Remove axes for the inset
-        model_image = mpimg.imread("model.png")  # Load your image
+        model_image = mpimg.imread("images/model.png")  # Load your image
         inset_ax.imshow(model_image)
 
         # Finalize plot
@@ -257,5 +257,5 @@ class CompartmentalModelSimulator:
 
 
 if __name__ == "__main__":
-    simulator = CompartmentalModelSimulator()
+    simulator = GraphPKSimulator()
     simulator.plot_simulation()
