@@ -2,7 +2,7 @@ from manim import *
 
 run_time = 1
 
-class CreateCircle(Scene):
+class CompartmentalModel(Scene):
     def construct(self):
         # Compartments
         circle_depot = Circle(color = GREEN).shift(3.8 * LEFT)
@@ -22,7 +22,8 @@ class CreateCircle(Scene):
                 .shift(0.6 * DOWN)
                 .add_tip(tip_width = 0.1, tip_length= 0.2),
             Arrow(start = 3.8 * LEFT + 2.8 * UP, end = 3.8 * LEFT + 0.4 * DOWN, 
-                  tip_shape = ArrowCircleFilledTip).scale(0.5, scale_tips = True)
+                  tip_shape = ArrowCircleFilledTip)
+                  .scale(0.5, scale_tips = True)
         ]
         arrow_labels = [
             MathTex(r"K_A").shift(2. * LEFT + 0.4 * UP),
