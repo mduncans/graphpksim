@@ -100,6 +100,11 @@ class GraphPKSimulator:
         self.save_button = Button(self.save_button_ax, 'Save to CSV', color='lightblue', hovercolor='dodgerblue')
         self.save_button.on_clicked(self.save_to_csv)
 
+        # Add a button to save all simulation data to a CSV
+        self.save_all_button_ax = plt.axes([0.8, 0.9, 0.15, 0.05])  # Position next to the save button
+        self.save_all_button = Button(self.save_all_button_ax, 'Save All Data', color='lightgreen', hovercolor='green')
+        self.save_all_button.on_clicked(self.save_all_data_to_csv)
+
         # Initial plot
         self.plot_simulation()
 
@@ -254,7 +259,41 @@ class GraphPKSimulator:
                     writer.writerow([i + 1, nominal_time, actual_time, concentration, *params])
         print(f"Results saved to {file_name}")
 
+    def save_all_data_to_csv(self, event):
+        """Saves all simulation data, including concentrations across compartments, to a CSV."""
+        file_name = self.file_name_box.text.strip()  # Get the file name from the TextBox
+        if not file_name.endswith(".csv"):
+            file_name += "_all_data.csv"
 
+        os.makedirs("simulated_results", exist_ok=True)  # Ensure the directory exists
+
+        with open(os.path.join("simulated_results", file_name), "w", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+
+            # Write the header with parameter columns
+            writer.writerow([
+                "ID", "Time (hr)", "Depot Concentration", "Central Concentration",
+                "Peripheral Concentration", "K_a", "Q", "V_c", "V_p", "CL"
+            ])
+
+            # Write data for each sample
+            for i in range(self.n_samples):
+                params = [
+                    self.sampled_means["K_a"][i],
+                    self.sampled_means["Q"][i],
+                    self.sampled_means["V_c"][i],
+                    self.sampled_means["V_p"][i],
+                    self.sampled_means["CL"][i],
+                ]
+                t_eval, results = self.simulate_with_solve_ivp((0, 120), [50.0, 0, 0, 0])
+                depot_concentration = results[:, 0]
+                central_concentration = results[:, 1]
+                peripheral_concentration = results[:, 2]
+
+                for t, depot, central, peripheral in zip(t_eval, depot_concentration, central_concentration, peripheral_concentration):
+                    writer.writerow([i + 1, t, depot, central, peripheral, *params])
+
+        print(f"All simulation data saved to {file_name}")
 
 if __name__ == "__main__":
     simulator = GraphPKSimulator()

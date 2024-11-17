@@ -1,6 +1,23 @@
 from manim import *
+import csv
 
 run_time = 1
+
+def extract_simulation_concs(file_path):
+    data_dict = {}
+
+    with open(file_path, 'r') as csvfile:
+        reader = csv.DictReader(csvfile)  
+        for row in reader:
+            time = float(row["Time (hr)"])
+            concentrations = [
+                float(row["Depot Concentration"]),
+                float(row["Central Concentration"]),
+                float(row["Peripheral Concentration"]),
+            ]
+            data_dict[time] = concentrations
+
+    return data_dict
 
 class CompartmentalModel(Scene):
     def construct(self):
@@ -56,6 +73,38 @@ class CompartmentalModel(Scene):
             run_time = run_time
         )
 
+        self.wait(1)
+
         self.play(
             Create(arrows[4]), Create(arrow_labels[4])
         )
+
+        sim_results = extract_simulation_concs("simulated_results/simulation_results.csv")
+        max_depot = max(concs[0] for concs in sim_results.values())
+        max_central = max(concs[1] for concs in sim_results.values())
+        max_periph = max(concs[2] for concs in sim_results.values())
+        
+        max_conc = max(max_depot, max_central, max_periph)
+        
+        total_duration = 20
+        num_frames = len(sim_results)
+        frame_duration = total_duration / num_frames
+        # Create animations for each time step
+        animations = []
+        for i, (t, concs) in enumerate(sim_results.items()):
+            if i == 0:
+                self.play(
+                    FadeOut(arrows[4]),
+                    FadeOut(arrow_labels[4])
+                )
+
+            animations.append(
+                AnimationGroup(
+                    circle_depot.animate.set_fill(GREEN, opacity=concs[0]/max_conc),
+                    circle_central.animate.set_fill(PINK, opacity=concs[1]/max_conc),
+                    circle_periph.animate.set_fill(BLUE, opacity=concs[2]/max_conc),
+                    lag_ratio=0,  # Synchronous updates
+                    run_time=frame_duration,
+                )
+            )
+        self.play(Succession(*animations))
