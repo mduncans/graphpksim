@@ -18,3 +18,8 @@ This matrix represents the flow through the system (out of each node). We can us
 $$
 \dot{c}(t) = -L^T \left(\mathcal{D} \right) c(t) + D_0
 $$
+
+## Manim visualizations
+
+Exploring [`manim`](https://github.com/ManimCommunity/manim) for visualizations.
+![manimpk](media/videos/scene/1080p60/CompartmentalModel_ManimCE_v0.18.1.gif)
