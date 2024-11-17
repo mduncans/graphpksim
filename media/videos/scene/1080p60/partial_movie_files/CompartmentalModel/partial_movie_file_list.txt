@@ -1,6 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:/Users/mattsmith/pypksim/media/videos/scene/1080p60/partial_movie_files/CompartmentalModel/3529212410_2426604147_223132457.mp4'
-file 'file:/Users/mattsmith/pypksim/media/videos/scene/1080p60/partial_movie_files/CompartmentalModel/3040924799_137256595_3437802791.mp4'
-file 'file:/Users/mattsmith/pypksim/media/videos/scene/1080p60/partial_movie_files/CompartmentalModel/3040924799_2126288086_1392548877.mp4'
-file 'file:/Users/mattsmith/pypksim/media/videos/scene/1080p60/partial_movie_files/CompartmentalModel/3040924799_3800535820_4069481850.mp4'
-file 'file:/Users/mattsmith/pypksim/media/videos/scene/1080p60/partial_movie_files/CompartmentalModel/3040924799_1459029956_3202550366.mp4'
