@@ -100,27 +100,55 @@ class CompartmentalModel(Scene):
             y_length=2,
             axis_config={"include_tip": False}
         ).to_edge(UP).shift(0.25 * UP)
-
+        
         depot_graph = axes.plot_line_graph(time, depot_concs, line_color=GREEN, vertex_dot_radius=0)
         central_graph = axes.plot_line_graph(time, central_concs, line_color=PINK, vertex_dot_radius=0)
         periph_graph = axes.plot_line_graph(time, periph_concs, line_color=BLUE, vertex_dot_radius=0)
+        
+        # Break the full graphs into smaller parts for animation
+        depot_segments = VGroup(*[
+            Line(axes.c2p(time[i], depot_concs[i]), axes.c2p(time[i + 1], depot_concs[i + 1]), color=GREEN)
+            for i in range(len(time) - 1)
+        ])
+        central_segments = VGroup(*[
+            Line(axes.c2p(time[i], central_concs[i]), axes.c2p(time[i + 1], central_concs[i + 1]), color=PINK)
+            for i in range(len(time) - 1)
+        ])
+        periph_segments = VGroup(*[
+            Line(axes.c2p(time[i], periph_concs[i]), axes.c2p(time[i + 1], periph_concs[i + 1]), color=BLUE)
+            for i in range(len(time) - 1)
+        ])
+
+        # Add the segments to the scene but keep them hidden initially
+        for segments in [depot_segments, central_segments, periph_segments]:
+            for segment in segments:
+                segment.set_opacity(0)
+        self.add(depot_segments, central_segments, periph_segments)
 
         depot_dot = Dot(color=GREEN).move_to(axes.c2p(time[0], depot_concs[0]))
         central_dot = Dot(color=PINK).move_to(axes.c2p(time[0], central_concs[0]))
         periph_dot = Dot(color=BLUE).move_to(axes.c2p(time[0], periph_concs[0]))
 
         animations = []
-        for i, (time, concs) in enumerate(sim_results.items()):
-            
+
+        for i, (t, concs) in enumerate(sim_results.items()):
+            if i == len(time) - 1:
+                break
+
             animations.append(
                 AnimationGroup(
                     circle_depot.animate.set_fill(GREEN, opacity=concs[0]/max_conc),
                     circle_central.animate.set_fill(PINK, opacity=concs[1]/max_conc),
                     circle_periph.animate.set_fill(BLUE, opacity=concs[2]/max_conc),
 
-                    depot_dot.animate.move_to(axes.c2p(time, concs[0])),
-                    central_dot.animate.move_to(axes.c2p(time, concs[1])),
-                    periph_dot.animate.move_to(axes.c2p(time, concs[2])),
+                    depot_dot.animate.move_to(axes.c2p(t, concs[0])),
+                    central_dot.animate.move_to(axes.c2p(t, concs[1])),
+                    periph_dot.animate.move_to(axes.c2p(t, concs[2])),
+
+                    # Reveal the next segment of the graphs
+                    depot_segments[i].animate.set_opacity(1),
+                    central_segments[i].animate.set_opacity(1),
+                    periph_segments[i].animate.set_opacity(1),
 
                     lag_ratio=0,  # Synchronous updates
                     run_time=frame_duration,
@@ -130,9 +158,7 @@ class CompartmentalModel(Scene):
         self.play(
             Create(arrows[4]), Create(arrow_labels[4])
         )
-        
         self.add(axes)
-        self.add(depot_graph, central_graph, periph_graph)
 
         self.play(
             #FadeOut(arrows[4]), FadeOut(arrow_labels[4]),
